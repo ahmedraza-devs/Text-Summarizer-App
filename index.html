@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Summarizer</title>
+    <style>
+        :root {
+            --bg: #000000;
+            --panel: #070b14;
+            --field: #0c1220;
+            --line: #1b2740;
+            --blue: #3b82f6;
+            --blue-soft: #60a5fa;
+            --blue-deep: #2563eb;
+            --text: #e6edf7;
+            --muted: #8a97ad;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.55;
+        }
+
+        .container {
+            max-width: 640px;
+            margin: 50px auto;
+            padding: 32px 28px;
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.04), 0 20px 60px rgba(37, 99, 235, 0.12);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .container:hover,
+        .container:focus-within {
+            border-color: rgba(59, 130, 246, 0.45);
+            box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.15), 0 20px 70px rgba(37, 99, 235, 0.22);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--blue);
+            font-size: 2.2rem;
+            letter-spacing: 0.5px;
+            margin: 0 0 28px;
+            text-shadow: 0 0 24px rgba(59, 130, 246, 0.45);
+        }
+
+        h3 {
+            text-align: center;
+            margin-top: -20px;
+            margin-bottom: 40px;
+            color: var(--blue-soft);
+            font-weight: 500;
+        }
+
+        p {
+            color: var(--muted);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        textarea {
+            height: 170px;
+            padding: 14px;
+            background: var(--field);
+            color: var(--text);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 16px;
+            line-height: 1.5;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+        }
+
+        textarea::placeholder {
+            color: #55627a;
+        }
+
+        textarea:hover {
+            border-color: #2a3c61;
+        }
+
+        textarea:focus {
+            border-color: var(--blue);
+            background: #0e1626;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25), 0 0 28px rgba(59, 130, 246, 0.25);
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--blue) 0%, var(--blue-deep) 100%);
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+            transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+        }
+
+        button:hover {
+            filter: brightness(1.12);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(59, 130, 246, 0.5);
+        }
+
+        button:active {
+            transform: translateY(0) scale(0.98);
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.4);
+        }
+
+        button:focus-visible {
+            outline: 2px solid var(--blue-soft);
+            outline-offset: 3px;
+        }
+
+        /* JS sets button.disabled while "Processing..." — show that state clearly */
+        button:disabled {
+            cursor: progress;
+            transform: none;
+            filter: none;
+            opacity: 0.8;
+            background: linear-gradient(90deg, #1d4ed8, #3b82f6, #1d4ed8);
+            background-size: 200% 100%;
+            animation: working 1.2s linear infinite;
+        }
+
+        @keyframes working {
+            from { background-position: 200% 0; }
+            to   { background-position: 0 0; }
+        }
+
+        #summary-output {
+            margin-top: 24px;
+            background: var(--field);
+            padding: 18px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            border-left: 3px solid var(--blue);
+        }
+
+        #summary-heading {
+            margin-top: 0px;
+            margin-bottom: 0px;
+            text-align: left;
+            color: var(--blue);
+            font-weight: 600;
+        }
+
+        #summary-text {
+            margin: 10px 0 0;
+            color: var(--text);
+            white-space: pre-wrap;
+        }
+
+        /* Empty hint until a summary shows up */
+        #summary-text:empty::before {
+            content: "Your summary will appear here.";
+            color: #55627a;
+        }
+
+        /* Reveal when text arrives (Processing..., summary, or error) */
+        #summary-text:not(:empty) {
+            animation: reveal 0.4s ease;
+        }
+
+        @keyframes reveal {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 680px) {
+            .container {
+                margin: 16px;
+                padding: 22px 16px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Text Summarizer</h1>
+        <h3>using HuggingFace Transformer</h3>
+        <p>Write or Paste your content below for quick summarization.</p>
+
+        <form id="summarization-form">
+            <textarea id="dialogue-input" placeholder="Enter your content here..." required></textarea>
+            <button type="submit">Summarize</button>
+        </form>
+
+        <div id="summary-output">
+            <h3 id="summary-heading">Content Summary</h3>
+            <p id="summary-text"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("summarization-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+        
+            const dialogueInput = document.getElementById("dialogue-input");
+            const summaryText = document.getElementById("summary-text");
+            const submitButton = e.target.querySelector("button");
+        
+            const dialogue = dialogueInput.value.trim();
+            if (!dialogue) return;
+        
+            summaryText.innerText = "Processing...";
+            submitButton.disabled = true;
+        
+            try {
+                const response = await fetch("/summarize/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ dialogue }),
+                });
+        
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+        
+                const data = await response.json();
+                summaryText.innerText = data.summary || "No summary returned.";
+            } catch (err) {
+                
+                summaryText.innerText = `Error: ${err.message}`;
+            } finally {
+                
+                submitButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
