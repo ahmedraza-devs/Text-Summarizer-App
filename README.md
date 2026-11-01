@@ -102,7 +102,7 @@ Text-Summarizer-App/
 
 ```bash
 
-git clone YOUR\_REPOSITORY\_URL
+git clone https://github.com/ahmedraza-devs/Text-Summarizer-App
 
 cd Text-Summarizer-App
 
